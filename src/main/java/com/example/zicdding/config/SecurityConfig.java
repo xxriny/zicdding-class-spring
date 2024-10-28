@@ -23,7 +23,7 @@ import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final JwtAuthFilter jwtAuthFilter;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -37,11 +37,17 @@ public class SecurityConfig {
         MvcRequestMatcher.Builder matcher = new MvcRequestMatcher.Builder(introspector);
 
         MvcRequestMatcher[] premitAllWhilteList = {
-                matcher.pattern("/users/**")
+                matcher.pattern("/swagger-ui/**"),
+                matcher.pattern("/v3/api-docs/**"),
+                matcher.pattern("/users/**"),
+                matcher.pattern("/users/login/**"),
+                matcher.pattern("/users/signUp/**"),
+                matcher.pattern("/classes/**")
         };
 
           http
-                .authorizeHttpRequests(authorize -> authorize
+                  .csrf(AbstractHttpConfigurer::disable)
+                  .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(premitAllWhilteList).permitAll()
                 //.requestMatchers(HttpMethod.DELETE, "/users").hasRole(RoleName.ROLE_ADMIN.get)
                 .anyRequest().authenticated());

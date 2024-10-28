@@ -27,26 +27,26 @@ public class UserRepository {
     static final private String TABLE = "TB_USER";
 
     private static final RowMapper<User> rowMapper = (ResultSet resultSet, int rowNum) -> User.builder()
-            .id(resultSet.getLong("id"))
+            .id(resultSet.getLong("user_id"))
             .nickname(resultSet.getString("nickname"))
             .email(resultSet.getString("email"))
             .password(resultSet.getString("password"))
-            .phoneNumber(resultSet.getString("phoneNumber"))
-            .roleType(resultSet.getString("roleType"))
-            .suspensionYn(resultSet.getString("suspensionYn"))
-            .delYn("N")
-            .createdDate(resultSet.getObject("createdDate", LocalDateTime.class))
+            .phoneNumber(resultSet.getString("phone_num"))
+            .roleType(resultSet.getString("role_type"))
+            .suspensionYn(resultSet.getString("suspension_yn"))
+            .delYn(resultSet.getString("del_yn"))
+            .createdDate(resultSet.getObject("created_date", LocalDateTime.class))
             .build();
 
     public Optional<User> findById(Long id) {
-        var sql = String.format("SELECT * FROM %s WHERE id = :id",TABLE);
+        var sql = String.format("SELECT * FROM %s WHERE uesr_id = :id",TABLE);
         var params = new MapSqlParameterSource().addValue("id", id);
         List<User> users = namedParameterJdbcTemplate.query(sql, params,rowMapper);
 
         User nullableUser = DataAccessUtils.singleResult(users);
         return Optional.ofNullable(nullableUser);
     }
-    public Optional<User> findByLoginInfoUserId(String email){
+    public Optional<User> findByEmail(String email) {
         var sql = String.format("SELECT * FROM %s WHERE email = :email",TABLE);
         var params = new MapSqlParameterSource().addValue("email", email);
         List<User> users = namedParameterJdbcTemplate.query(sql, params,rowMapper);
@@ -54,6 +54,7 @@ public class UserRepository {
         User nullableUser = DataAccessUtils.singleResult(users);
         return Optional.ofNullable(nullableUser);
     }
+
 
     public User save(User user){
         if(user.getId() == null){
@@ -72,7 +73,7 @@ public class UserRepository {
     public User insert(User user){
         SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(namedParameterJdbcTemplate.getJdbcTemplate())
                 .withTableName(TABLE)
-                .usingGeneratedKeyColumns("id");
+                .usingGeneratedKeyColumns("user_id");
 
         SqlParameterSource params = new BeanPropertySqlParameterSource(user);
         var id = jdbcInsert.executeAndReturnKey(params).longValue();

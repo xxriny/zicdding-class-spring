@@ -1,6 +1,8 @@
 package com.example.zicdding.security;
 
 import com.example.zicdding.domain.user.dto.JwtDto;
+import com.example.zicdding.domain.user.dto.UserDto;
+import com.example.zicdding.domain.user.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -10,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -38,51 +41,46 @@ public class JwtProvider  {
         key = Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    public String getUsernameFromToken(final String token) {
-        return getClaimFromToken(token, Claims::getSubject);
-    }
 
-    public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
-        if(validateToken(token)) {
-            return null;
-        }
-
-        final Claims claims =  getAuthentication(token);
-        return claimsResolver.apply(claims);
-    }
 
     private Claims getAuthentication(String token) {
-        return Jwts.parser()
-                .setSigningKey(secretKey)
-                .parseClaimsJwt(token)
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
                 .getBody();
     }
 
     public Date getExpirationDateFromToken(String token) {
-        return getClaimFromToken(token, Claims::getExpiration);
+        return getAuthentication(token).getExpiration();
     }
 
-    public JwtDto generateAccessToken(Long id){
-        return generateToken(id, accessTokenExpireTime);
-    }
-    public JwtDto generateRefreshToken(Long  id ){
-        return generateToken(id, refreshTokenExpireTime);
+    public JwtDto generateAccessToken(User user) {
+        return generateToken(user, accessTokenExpireTime, false);
     }
 
-    private JwtDto generateToken(Long userId, long expireTime) {
+    public JwtDto generateRefreshToken(User user) {
+        return generateToken(user, refreshTokenExpireTime, true);
+    }
+
+    private JwtDto generateToken(User user, long expireTime,  boolean isRefreshToken) {
         Date expirationDate = new Date(System.currentTimeMillis() + expireTime * 1000); // 밀리초로 변환
-
+        Claims claims = Jwts.claims().setSubject(user.getEmail());
           String token = Jwts.builder()
-                .setSubject(String.valueOf(userId))
+                  .setClaims(claims)
                 .setExpiration(expirationDate)
                 .signWith(SignatureAlgorithm.HS256, key)
                 .compact();
         return JwtDto.builder()
                 .grantType("Bearer")
-                .accessToken(token)
+                .accessToken(isRefreshToken ? null : token) // 리프레시 토큰이면 액세스 토큰은 null
+                .refreshToken(isRefreshToken ? token : null)
                 .build();
     }
 
+    public String getEmail(final String token) {
+        return getAuthentication(token).getSubject();
+    }
 
 
     // 사용자 속성 정보 조회
@@ -90,8 +88,8 @@ public class JwtProvider  {
 
     public Boolean validateToken(String token) {
         try{
-            Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
-            return true;
+            Date expirationDate = getExpirationDateFromToken(token);
+            return !expirationDate.before(new Date());
         }catch (MalformedJwtException e){
                 log.error("Invalid JWT token : {}", e.getMessage());
         }catch(ExpiredJwtException e){
