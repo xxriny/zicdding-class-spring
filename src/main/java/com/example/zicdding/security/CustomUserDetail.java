@@ -5,7 +5,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -28,6 +27,12 @@ public record CustomUserDetail(User user) implements UserDetails {
     public String getUsername() {
         return user.getNickname();
     }
+
+
+    public String getEmail() {
+        return user.getEmail();
+    }
+
     @Override
     public boolean isAccountNonExpired() {
         return true; // JWT 인증방식이므로 접근 가능하도록 설정
@@ -47,4 +52,6 @@ public record CustomUserDetail(User user) implements UserDetails {
     public boolean isEnabled() {
         return true; // JWT 인증방식의므로 접근 가능하도록 설정
     }
+
+
 }

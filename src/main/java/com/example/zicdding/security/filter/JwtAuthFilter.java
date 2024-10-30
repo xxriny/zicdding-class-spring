@@ -1,45 +1,32 @@
 package com.example.zicdding.security.filter;
 
 import com.example.zicdding.domain.user.service.CustomUserDetailService;
-import com.example.zicdding.domain.user.service.UserReadService;
-import com.example.zicdding.security.JwtProvider;
+
+import com.example.zicdding.security.provider.JwtProvider;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.GenericFilter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.FilterChainProxy;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+
 import org.springframework.stereotype.Component;
-import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.Collection;
-import java.util.Collections;
 
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
-    private final UserReadService userReadService;
-    private final FilterChainProxy filterChainProxy;
     private final CustomUserDetailService customUserDetailService;
 
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        final String token = request.getHeader("Authorization");
-
-
-
-        if(token != null && !token.isEmpty()){
+        final String token = resolveToken(request);
+        System.out.println("JwtAuthFilter called");
+        if(token != null && jwtProvider.validateToken(token)) {
            String email = jwtProvider.getEmail(token);
             UserDetails userDetails = customUserDetailService.loadUserByUsername(email);
             if(userDetails  != null  && SecurityContextHolder.getContext().getAuthentication() == null){
@@ -57,12 +44,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
      */
     private String resolveToken(HttpServletRequest request) {
         String token = request.getHeader("Authorization");
-
         // Token 정보 존재 여부 및 Bearer 토큰인지 확인
         if (token != null && token.startsWith("Bearer ")) {
             return token.substring(7);
         }
-
         return null;
     }
 }

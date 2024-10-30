@@ -1,4 +1,4 @@
-package com.example.zicdding.config;
+package com.example.zicdding.global.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -17,8 +17,8 @@ public class SwaggerConfig {
     }
     private Info apiInfo() {
         return new Info()
-                .title("CodeArena Swagger")
-                .description("ZICDDING USER")
+                .title("Zicdding API Swagger")
+                .description("writer xxrin")
                 .version("1.0.0");
     }
 }

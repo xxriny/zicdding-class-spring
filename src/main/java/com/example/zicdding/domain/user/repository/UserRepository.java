@@ -12,9 +12,7 @@ import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Repository;
 
-import java.lang.reflect.Member;
 import java.sql.ResultSet;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -22,7 +20,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Repository
 public class UserRepository {
-    private final JdbcTemplate jdbcTemplate;
+
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     static final private String TABLE = "TB_USER";
 
@@ -39,7 +37,7 @@ public class UserRepository {
             .build();
 
     public Optional<User> findById(Long id) {
-        var sql = String.format("SELECT * FROM %s WHERE uesr_id = :id",TABLE);
+        var sql = String.format("SELECT * FROM %s WHERE user_id = :id",TABLE);
         var params = new MapSqlParameterSource().addValue("id", id);
         List<User> users = namedParameterJdbcTemplate.query(sql, params,rowMapper);
 
@@ -49,15 +47,19 @@ public class UserRepository {
     public Optional<User> findByEmail(String email) {
         var sql = String.format("SELECT * FROM %s WHERE email = :email",TABLE);
         var params = new MapSqlParameterSource().addValue("email", email);
-        List<User> users = namedParameterJdbcTemplate.query(sql, params,rowMapper);
 
+        System.out.println("Executing SQL: " + sql);
+        System.out.println("With parameters: " + params);
+        List<User> users = namedParameterJdbcTemplate.query(sql, params,rowMapper);
         User nullableUser = DataAccessUtils.singleResult(users);
+
         return Optional.ofNullable(nullableUser);
     }
 
 
     public User save(User user){
         if(user.getId() == null){
+            System.out.println("Phone number from Repository: " + user.getPhoneNumber());
             return insert(user);
         }
         return update(user);
@@ -77,7 +79,7 @@ public class UserRepository {
 
         SqlParameterSource params = new BeanPropertySqlParameterSource(user);
         var id = jdbcInsert.executeAndReturnKey(params).longValue();
-
+        System.out.println("Inserted id: " + params);
         return User.builder()
                 .id(id)
                 .email(user.getEmail())

@@ -12,13 +12,11 @@ public class UserReadService {
 
     final private UserRepository userRepository;
 
-    public UserDto toDto(User user, String accessToken) {
+    public UserDto toDto(User user) {
         return new UserDto(
                 user.getId(),
                 user.getEmail(),
                 user.getNickname(),
-                accessToken,
-                user.getRefreshToken(),
                 user.getPhoneNumber()
         ); }
     /**

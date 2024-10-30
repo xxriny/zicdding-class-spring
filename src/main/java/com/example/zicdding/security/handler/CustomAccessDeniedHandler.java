@@ -1,6 +1,6 @@
 package com.example.zicdding.security.handler;
 
-import com.example.zicdding.config.exception.enums.ApiExceptionEnum;
+import com.example.zicdding.global.common.enums.ErrorCodeEnum;
 import com.google.gson.JsonObject;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,8 +28,8 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         response.setCharacterEncoding("utf-8");
 
         JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("code", ApiExceptionEnum.ACCESS_DENIED.getCode());
-        jsonObject.addProperty("message", ApiExceptionEnum.ACCESS_DENIED.getMessage());
+        jsonObject.addProperty("code", ErrorCodeEnum.ACCESS_DENIED.getCode());
+        jsonObject.addProperty("message", ErrorCodeEnum.ACCESS_DENIED.getMessage());
         PrintWriter out = response.getWriter();
         out.println(jsonObject.toString());
     }

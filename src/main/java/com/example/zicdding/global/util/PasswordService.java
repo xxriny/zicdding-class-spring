@@ -1,4 +1,4 @@
-package com.example.zicdding.util;
+package com.example.zicdding.global.util;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;

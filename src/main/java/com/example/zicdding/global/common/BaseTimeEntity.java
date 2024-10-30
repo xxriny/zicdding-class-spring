@@ -1,4 +1,4 @@
-package com.example.zicdding.domain.common;
+package com.example.zicdding.global.common;
 
 import jakarta.persistence.Column;
 import lombok.Getter;

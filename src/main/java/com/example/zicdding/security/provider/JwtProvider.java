@@ -1,23 +1,18 @@
-package com.example.zicdding.security;
+package com.example.zicdding.security.provider;
 
 import com.example.zicdding.domain.user.dto.JwtDto;
-import com.example.zicdding.domain.user.dto.UserDto;
 import com.example.zicdding.domain.user.entity.User;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.util.Date;
-import java.util.function.Function;
 
 
 @Slf4j
@@ -40,8 +35,6 @@ public class JwtProvider  {
     public void init() {
         key = Keys.hmacShaKeyFor(secretKey.getBytes());
     }
-
-
 
     private Claims getAuthentication(String token) {
         return Jwts.parserBuilder()
@@ -68,9 +61,9 @@ public class JwtProvider  {
         Claims claims = Jwts.claims().setSubject(user.getEmail());
           String token = Jwts.builder()
                   .setClaims(claims)
-                .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.HS256, key)
-                .compact();
+                  .setExpiration(expirationDate)
+                  .signWith(SignatureAlgorithm.HS256, key)
+                  .compact();
         return JwtDto.builder()
                 .grantType("Bearer")
                 .accessToken(isRefreshToken ? null : token) // 리프레시 토큰이면 액세스 토큰은 null
@@ -82,24 +75,20 @@ public class JwtProvider  {
         return getAuthentication(token).getSubject();
     }
 
-
-    // 사용자 속성 정보 조회
-
-
     public Boolean validateToken(String token) {
         try{
             Date expirationDate = getExpirationDateFromToken(token);
             return !expirationDate.before(new Date());
         }catch (MalformedJwtException e){
-                log.error("Invalid JWT token : {}", e.getMessage());
+            log.error("Invalid JWT token : {}", e.getMessage());
         }catch(ExpiredJwtException e){
-                log.error("Expired JWT token : {}", e.getMessage());
+            log.error("Expired JWT token : {}", e.getMessage());
         }catch (SecurityException e){
-                log.error("Invalid JWT token : {}", e.getMessage());
+            log.error("Invalid JWT token : {}", e.getMessage());
         }catch (IllegalArgumentException e){
-                log.error("JWT claims string is empty : {}", e.getMessage());
+            log.error("JWT claims string is empty : {}", e.getMessage());
         }catch (UnsupportedJwtException e){
-                log.error("Unsupported JWT token : {}", e.getMessage());
+            log.error("Unsupported JWT token : {}", e.getMessage());
         }
         return false;
     }

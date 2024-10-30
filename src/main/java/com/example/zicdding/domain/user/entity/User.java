@@ -1,5 +1,6 @@
 package com.example.zicdding.domain.user.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -7,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+
 
 @Getter
 public class User {
@@ -16,6 +18,7 @@ public class User {
     final private String email;
     final private String nickname;
     final private String password;
+    @Column(name = "phone_num")
     final private String phoneNumber;
     final private String roleType;
     final private String suspensionYn;
@@ -40,7 +43,6 @@ public class User {
         this.modDate = modDate != null ? modDate : LocalDateTime.now(); // 기본값
         this.refreshToken = refreshToken;
     }
-
 
 
 }
