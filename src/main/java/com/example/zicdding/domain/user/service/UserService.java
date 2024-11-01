@@ -52,14 +52,13 @@ public class UserService {
 
         JwtDto refreshTokenDto = jwtProvider.generateRefreshToken(user);
         String refreshToken = refreshTokenDto.refreshToken();
-        user = user.toBuilder()
-                .refreshToken(refreshToken)
-                .build();
 
+        user.setRefreshToken(refreshToken);
 
-        User savedUser = userRepository.save(user);
+        userRepository.save(user);
         JwtDto accessTokenDto = jwtProvider.generateAccessToken(user);
         String accessToken = accessTokenDto.accessToken();
+
         redisTemplate.opsForValue().set(user.getEmail() + "_access_token", accessToken, 1, TimeUnit.HOURS);
         redisTemplate.opsForValue().set(user.getEmail() + "_refresh_token", refreshToken, 1, TimeUnit.DAYS);
 
@@ -84,38 +83,43 @@ public class UserService {
 
     public AuthResponseDto login(UserLoginDto userLoginDto) throws BackingStoreException {
         Optional<User> userOptional = userRepository.findByEmail(userLoginDto.email());
-        User user = userOptional.orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+        User user = userOptional.orElseThrow(() -> new CustomException(ErrorCodeEnum.USER_NOT_FOUND));
 
         if(!passwordEncoder.matches(userLoginDto.password(), user.getPassword())) {
             throw new CustomException(PASSWORD_NOT_MATCH);
         }
 
-    //redis에 저장한 accesstoken 가져오기
+        //redis에 저장한 accesstoken 가져오기
         String accessToken =getAccessToken(user.getEmail());
 
         if (accessToken != null && jwtProvider.validateToken(accessToken)) {
             String refreshToken = redisTemplate.opsForValue().get(userLoginDto.email() + "_refresh_token");
+            if (refreshToken != null && !jwtProvider.validateToken(refreshToken)) {
+                JwtDto refreshTokenDto = jwtProvider.generateRefreshToken(user);
+                refreshToken = refreshTokenDto.refreshToken();
+                redisTemplate.opsForValue().set(user.getEmail() + "_refresh_token", refreshToken, 1, TimeUnit.DAYS);
+            }
             // 유효한 토큰이 있는 경우
-            return AuthResponseDto.builder()
-                    .id(user.getId())
-                    .email(user.getEmail())
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .build();
+            return buildAuthResponse(user, accessToken, refreshToken);
         }
+
         JwtDto accessTokenDto = jwtProvider.generateAccessToken(user);
         accessToken = accessTokenDto.accessToken();
         redisTemplate.opsForValue().set(user.getEmail() + "_access_token", accessToken, 1, TimeUnit.HOURS);
 
-        // 새로운 refreshToken 생성 (필요한 경우)
         String refreshToken = getRefreshToken(user.getEmail());
         if (refreshToken == null) {
             JwtDto refreshTokenDto = jwtProvider.generateRefreshToken(user);
             refreshToken = refreshTokenDto.refreshToken();
-            redisTemplate.opsForValue().set(userLoginDto.email() + "_refresh_token", refreshToken, 1, TimeUnit.DAYS);
+            redisTemplate.opsForValue().set(user.getEmail() + "_refresh_token", refreshToken, 1, TimeUnit.DAYS);
         }
 
         // AuthResponseDto 생성 및 반환
+        return buildAuthResponse(user, accessToken, refreshToken);
+    }
+    
+    //인증된 유저 반환 메서드
+    private AuthResponseDto buildAuthResponse(User user, String accessToken, String refreshToken) {
         return AuthResponseDto.builder()
                 .id(user.getId())
                 .email(user.getEmail())

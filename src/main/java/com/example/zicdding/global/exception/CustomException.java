@@ -11,7 +11,7 @@ public class CustomException extends RuntimeException {
     private final ErrorCodeEnum errorCode;
 
     public HttpStatus getHttpStatus() {
-        return errorCode.getHttpStatus();
+        return errorCode.getCode();
     }
 
     public CustomException(ErrorCodeEnum errorCodeEnum) {

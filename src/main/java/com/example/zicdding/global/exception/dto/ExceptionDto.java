@@ -7,16 +7,15 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public class ExceptionDto {
-    private final HttpStatus statusCode;
+    private final int status;
 
-    @NotNull
-    private final Integer code;
+    private final HttpStatus code;
 
     @NotNull
     private final String message;
 
     public ExceptionDto(ErrorCodeEnum exceptionEnum) {
-        this.statusCode = exceptionEnum.getHttpStatus();
+        this.status = exceptionEnum.getStatus();
         this.code = exceptionEnum.getCode();
         this.message = exceptionEnum.getMessage();
     }

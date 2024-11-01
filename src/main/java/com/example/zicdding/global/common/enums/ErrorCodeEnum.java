@@ -15,12 +15,12 @@ public enum ErrorCodeEnum {
     EMAIL_DUPLICATE(HttpStatus.CONFLICT, 40901, "이메일이 이미 사용 중입니다."),
     PASSWORD_NOT_MATCH(HttpStatus.NOT_FOUND, 40901, "비밀번호가 틀립니다.");
 
-    private final HttpStatus httpStatus;
-    private final Integer code;
+    private final HttpStatus code;
+    private final Integer status;
     private final String message;
 
     //status와 코드만
-    ErrorCodeEnum(HttpStatus httpStatus, Integer code) {
-        this(httpStatus, code, null);
+    ErrorCodeEnum(HttpStatus code, Integer status) {
+        this(code, status, null);
     }
 }

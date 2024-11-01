@@ -1,32 +1,41 @@
 package com.example.zicdding.domain.user.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.example.zicdding.global.common.BaseTimeEntity;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 
 @Getter
-public class User {
+@Setter
+@Entity
+@Table(name = "TB_USER")
+public class User extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    final private Long id;
-    final private String email;
-    final private String password;
-    final private String nickname;
-    final private String phoneNumber;
-    final private String roleType;
-    final private String suspensionYn;
-    final private String delYn;
-    final private LocalDateTime createdDate;
-    final private Long modUserId;
-    final private LocalDateTime modDate;
+    private Long id; // final 제거
 
-    final private String refreshToken;
+    private String email;
+    private String password;
+    private String nickname;
+    @Column(name = "phone_num")
+    private String phoneNumber;
+    private String roleType;
+    private String suspensionYn;
+    private String delYn;
+    private LocalDateTime createdDate;
+    private Long modUserId;
+    private LocalDateTime modDate;
+    private String refreshToken;
+
+
+    public User() {
+    }
+
     @Builder(toBuilder = true)
     public User(Long id, String email,String password, String nickname,  String phoneNumber, String roleType, String suspensionYn, String delYn, LocalDateTime createdDate, Long modUserId, LocalDateTime modDate,  String refreshToken) {
         this.id = id;
@@ -42,7 +51,4 @@ public class User {
         this.modDate = modDate != null ? modDate : LocalDateTime.now(); // 기본값
         this.refreshToken = refreshToken;
     }
-
-
-
 }

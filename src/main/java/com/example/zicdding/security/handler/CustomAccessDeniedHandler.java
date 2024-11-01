@@ -28,7 +28,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         response.setCharacterEncoding("utf-8");
 
         JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("code", ErrorCodeEnum.ACCESS_DENIED.getCode());
+        jsonObject.addProperty("status", ErrorCodeEnum.ACCESS_DENIED.getStatus());
         jsonObject.addProperty("message", ErrorCodeEnum.ACCESS_DENIED.getMessage());
         PrintWriter out = response.getWriter();
         out.println(jsonObject.toString());

@@ -33,9 +33,7 @@ public class testCheckEmail {
     public void testFindByEmail() {
         String email = "xxrin01299@gmail.com";
 
-        // Mock 설정: 이메일이 존재하는 경우
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(new User(1L, email, "nickname", "password", "phone", "1", "", "", LocalDateTime.now(), 1L, LocalDateTime.now(), "")));
-
+   
         // 이메일이 존재하는지 확인
         Optional<User> user = userRepository.findByEmail(email);
         System.out.println("Retrieved User: " + user.orElse(null));

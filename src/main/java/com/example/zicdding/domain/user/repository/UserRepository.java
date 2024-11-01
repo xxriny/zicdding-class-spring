@@ -73,6 +73,8 @@ public class UserRepository {
     }
 
     public User insert(User user){
+
+        System.out.println("Inserting User: " + user);
         SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(namedParameterJdbcTemplate.getJdbcTemplate())
                 .withTableName(TABLE)
                 .usingGeneratedKeyColumns("user_id");
