@@ -7,5 +7,4 @@ public record JwtDto(
         String grantType,
         String accessToken,
         String refreshToken
-) {
-}
+){}

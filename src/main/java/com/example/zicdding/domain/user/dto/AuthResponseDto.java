@@ -4,7 +4,8 @@ import lombok.Builder;
 
 @Builder
 public record AuthResponseDto (
-        UserDto user,
-        JwtDto jwt
-){
-}
+        Long id,
+        String email,
+        String accessToken,
+        String refreshToken
+){}

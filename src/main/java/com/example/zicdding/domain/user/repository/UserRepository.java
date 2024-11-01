@@ -26,9 +26,9 @@ public class UserRepository {
 
     private static final RowMapper<User> rowMapper = (ResultSet resultSet, int rowNum) -> User.builder()
             .id(resultSet.getLong("user_id"))
-            .nickname(resultSet.getString("nickname"))
             .email(resultSet.getString("email"))
             .password(resultSet.getString("password"))
+            .nickname(resultSet.getString("nickname"))
             .phoneNumber(resultSet.getString("phone_num"))
             .roleType(resultSet.getString("role_type"))
             .suspensionYn(resultSet.getString("suspension_yn"))
@@ -44,6 +44,7 @@ public class UserRepository {
         User nullableUser = DataAccessUtils.singleResult(users);
         return Optional.ofNullable(nullableUser);
     }
+
     public Optional<User> findByEmail(String email) {
         var sql = String.format("SELECT * FROM %s WHERE email = :email",TABLE);
         var params = new MapSqlParameterSource().addValue("email", email);
@@ -55,7 +56,6 @@ public class UserRepository {
 
         return Optional.ofNullable(nullableUser);
     }
-
 
     public User save(User user){
         if(user.getId() == null){
@@ -83,8 +83,8 @@ public class UserRepository {
         return User.builder()
                 .id(id)
                 .email(user.getEmail())
-                .nickname(user.getNickname())
                 .password(user.getPassword())
+                .nickname(user.getNickname())
                 .phoneNumber(user.getPhoneNumber())
                 .roleType(user.getRoleType())
                 .suspensionYn(user.getSuspensionYn())

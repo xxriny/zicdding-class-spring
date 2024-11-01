@@ -16,9 +16,8 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     final private Long id;
     final private String email;
-    final private String nickname;
     final private String password;
-    @Column(name = "phone_num")
+    final private String nickname;
     final private String phoneNumber;
     final private String roleType;
     final private String suspensionYn;
@@ -29,11 +28,11 @@ public class User {
 
     final private String refreshToken;
     @Builder(toBuilder = true)
-    public User(Long id, String email, String nickname, String password, String phoneNumber, String roleType, String suspensionYn, String delYn, LocalDateTime createdDate, Long modUserId, LocalDateTime modDate,  String refreshToken) {
+    public User(Long id, String email,String password, String nickname,  String phoneNumber, String roleType, String suspensionYn, String delYn, LocalDateTime createdDate, Long modUserId, LocalDateTime modDate,  String refreshToken) {
         this.id = id;
         this.email = email;
-        this.nickname = nickname;
         this.password = password;
+        this.nickname = nickname;
         this.phoneNumber = phoneNumber;
         this.roleType = roleType != null ? roleType : "1"; // 기본값
         this.suspensionYn = suspensionYn != null ? suspensionYn : "N"; // 기본값
@@ -43,6 +42,7 @@ public class User {
         this.modDate = modDate != null ? modDate : LocalDateTime.now(); // 기본값
         this.refreshToken = refreshToken;
     }
+
 
 
 }

@@ -20,7 +20,5 @@ public class ExceptionDto {
         this.code = exceptionEnum.getCode();
         this.message = exceptionEnum.getMessage();
     }
-    public static ExceptionDto of(ErrorCodeEnum exceptionEnum) {
-        return new ExceptionDto(exceptionEnum);
-    }
+
 }

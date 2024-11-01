@@ -8,11 +8,9 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum SuccessEnum {
     USER_CREATED(HttpStatus.OK,"회원가입 성공"),
-    LOGIN_SUCCESS(HttpStatus.OK, "로그인 성공");
-
+    LOGIN_SUCCESS(HttpStatus.OK, "로그인 성공"),
+    EMAIL_AVAILABLE(HttpStatus.OK,"사용가능한 이메일입니다"),
+    LOGOUT_SUCCESS(HttpStatus.OK,"로그아웃 되었습니다");
     private final HttpStatus status;
     private final String message;
-    public int getStatusCode(){
-        return status.value();
-    }
 }

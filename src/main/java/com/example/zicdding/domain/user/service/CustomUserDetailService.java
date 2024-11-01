@@ -4,8 +4,8 @@ import com.example.zicdding.global.common.enums.ErrorCodeEnum;
 import com.example.zicdding.domain.user.entity.User;
 import com.example.zicdding.domain.user.repository.UserRepository;
 
+import com.example.zicdding.global.exception.CustomException;
 import com.example.zicdding.security.CustomUserDetail;
-import com.example.zicdding.global.exception.ApplicationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -20,7 +20,7 @@ private final UserRepository userRepository;
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ApplicationException(ErrorCodeEnum.USER_NOT_FOUND)); // ApiExceptionEnum 사용
+                .orElseThrow(() -> new CustomException(ErrorCodeEnum.USER_NOT_FOUND)); // ApiExceptionEnum 사용
         return new CustomUserDetail(user);
     }
 }
