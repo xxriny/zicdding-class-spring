@@ -1,6 +1,7 @@
 package com.example.zicdding.security;
 
 import com.example.zicdding.domain.user.entity.User;
+import com.example.zicdding.global.common.enums.UserRole;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,27 +11,33 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public record CustomUserDetail(User user) implements UserDetails {
+
+public record CustomUserDetail(User user)  implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<String> roles = new ArrayList<>();
-        roles.add("ROLE_" + user.getRoleType().toString());
-        return roles.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+        UserRole role;
+
+        if ("1".equals(user.getRoleType())) {
+            role = UserRole.ADMIN;
+        } else if ("2".equals(user.getRoleType())) {
+            role = UserRole.MEMBER;
+        } else {
+            throw new IllegalArgumentException("Invalid role type");
+        }
+        return List.of(role.toAuthority()); // toAuthority 메서드로 권한 생성
     }
 
     @Override
     public String getPassword() {
-        return "";
+        return user.getPassword();
     }
 
     @Override
     public String getUsername() {
-        return user.getNickname();
-    }
-
-
-    public String getEmail() {
         return user.getEmail();
+    }
+    public User getUser() {
+        return user;
     }
 
     @Override

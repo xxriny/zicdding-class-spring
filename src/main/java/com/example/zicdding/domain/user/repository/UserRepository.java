@@ -34,8 +34,9 @@ public class UserRepository {
             .suspensionYn(resultSet.getString("suspension_yn"))
             .delYn(resultSet.getString("del_yn"))
             .createdDate(resultSet.getObject("created_date", LocalDateTime.class))
+            .refreshToken(resultSet.getString("refresh_token"))
             .build();
-
+/*
     public Optional<User> findById(Long id) {
         var sql = String.format("SELECT * FROM %s WHERE user_id = :id",TABLE);
         var params = new MapSqlParameterSource().addValue("id", id);
@@ -44,6 +45,7 @@ public class UserRepository {
         User nullableUser = DataAccessUtils.singleResult(users);
         return Optional.ofNullable(nullableUser);
     }
+*/
 
     public Optional<User> findByEmail(String email) {
         var sql = String.format("SELECT * FROM %s WHERE email = :email",TABLE);
@@ -57,10 +59,20 @@ public class UserRepository {
         return Optional.ofNullable(nullableUser);
     }
 
+    public Optional<User> findByRefreshToken(String refreshToken) {
+        var sql = String.format("SELECT * FROM %s WHERE refresh_token = :refreshToken",TABLE);
+        var params = new MapSqlParameterSource().addValue("refreshToken", refreshToken);
+
+        System.out.println("Executing SQL: " + sql);
+        System.out.println("With parameters: " + params);
+        List<User> users = namedParameterJdbcTemplate.query(sql, params,rowMapper);
+        User nullableUser = DataAccessUtils.singleResult(users);
+        System.out.println(nullableUser + "찾음?");
+        return Optional.ofNullable(nullableUser);
+    }
     public User save(User user){
         if(user.getId() == null){
-            System.out.println("Phone number from Repository: " + user.getPhoneNumber());
-            return insert(user);
+             return insert(user);
         }
         return update(user);
     }
@@ -74,24 +86,23 @@ public class UserRepository {
 
     public User insert(User user){
 
-        System.out.println("Inserting User: " + user);
         SimpleJdbcInsert jdbcInsert = new SimpleJdbcInsert(namedParameterJdbcTemplate.getJdbcTemplate())
                 .withTableName(TABLE)
                 .usingGeneratedKeyColumns("user_id");
 
-        SqlParameterSource params = new BeanPropertySqlParameterSource(user);
+        SqlParameterSource params = new MapSqlParameterSource()
+                .addValue("email", user.getEmail())
+                .addValue("password", user.getPassword())
+                .addValue("nickname", user.getNickname())
+                .addValue("phone_num", user.getPhoneNumber())
+                .addValue("role_type", user.getRoleType())
+                .addValue("suspension_yn", user.getSuspensionYn())
+                .addValue("del_yn", user.getDelYn())
+                .addValue("created_date", user.getCreatedDate())
+                .addValue("mod_user_id", user.getModUserId())
+                .addValue("mod_date", user.getModDate())
+                .addValue("refresh_token", user.getRefreshToken());
         var id = jdbcInsert.executeAndReturnKey(params).longValue();
-        System.out.println("Inserted id: " + params);
-        return User.builder()
-                .id(id)
-                .email(user.getEmail())
-                .password(user.getPassword())
-                .nickname(user.getNickname())
-                .phoneNumber(user.getPhoneNumber())
-                .roleType(user.getRoleType())
-                .suspensionYn(user.getSuspensionYn())
-                .createdDate(user.getCreatedDate())
-                .delYn(user.getDelYn())
-                .build();
+        return User.builder().id(id).build();
     }
 }

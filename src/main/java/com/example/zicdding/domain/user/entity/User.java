@@ -6,13 +6,14 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.security.core.GrantedAuthority;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 
 
 @Getter
 @Setter
-@Entity
 @Table(name = "TB_USER")
 public class User extends BaseTimeEntity {
     @Id
@@ -31,11 +32,6 @@ public class User extends BaseTimeEntity {
     private Long modUserId;
     private LocalDateTime modDate;
     private String refreshToken;
-
-
-    public User() {
-    }
-
     @Builder(toBuilder = true)
     public User(Long id, String email,String password, String nickname,  String phoneNumber, String roleType, String suspensionYn, String delYn, LocalDateTime createdDate, Long modUserId, LocalDateTime modDate,  String refreshToken) {
         this.id = id;
@@ -51,4 +47,5 @@ public class User extends BaseTimeEntity {
         this.modDate = modDate != null ? modDate : LocalDateTime.now(); // 기본값
         this.refreshToken = refreshToken;
     }
+
 }

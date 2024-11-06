@@ -17,7 +17,7 @@ import java.io.PrintWriter;
 @Slf4j
 @RequiredArgsConstructor
 @Component
-public class CustomAccessDeniedHandler implements AccessDeniedHandler {
+public class CustomAccessDeniedHandler extends Throwable implements AccessDeniedHandler {
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
         log.info("[CustomAccessDeniedHandler] :: {}", accessDeniedException.getMessage());
@@ -26,7 +26,6 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType("application/json; charset=utf-8");
         response.setCharacterEncoding("utf-8");
-
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("status", ErrorCodeEnum.ACCESS_DENIED.getStatus());
         jsonObject.addProperty("message", ErrorCodeEnum.ACCESS_DENIED.getMessage());

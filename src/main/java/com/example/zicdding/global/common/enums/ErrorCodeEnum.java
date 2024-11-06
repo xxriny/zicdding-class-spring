@@ -13,7 +13,10 @@ public enum ErrorCodeEnum {
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, 50000, "서버 내부 오류입니다."),
     NOT_FOUND_END_POINT(HttpStatus.NOT_FOUND, 40400, "존재하지 않는 API입니다."),
     EMAIL_DUPLICATE(HttpStatus.CONFLICT, 40901, "이메일이 이미 사용 중입니다."),
-    PASSWORD_NOT_MATCH(HttpStatus.NOT_FOUND, 40901, "비밀번호가 틀립니다.");
+    PASSWORD_NOT_MATCH(HttpStatus.NOT_FOUND, 40901, "비밀번호가 틀립니다."),
+    INVALID_REFRESH_TOKEN(HttpStatus.INSUFFICIENT_STORAGE,40101,"리프레시 토큰이 유효하지 않습니다" )
+    , INVALID_ACCESS_TOKEN(HttpStatus.INSUFFICIENT_STORAGE,40101,"ACCESS 토큰이 유효하지 않습니다" );
+    ;
 
     private final HttpStatus code;
     private final Integer status;
