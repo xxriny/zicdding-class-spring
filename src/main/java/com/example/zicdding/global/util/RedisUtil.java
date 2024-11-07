@@ -3,9 +3,9 @@ package com.example.zicdding.global.util;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
@@ -29,12 +29,12 @@ public class RedisUtil {
         return Boolean.TRUE.equals(redisTemplate.delete(key));
     }
 
-    public void setBlackList(String key, Object o, int minutes) {
+    public void setBlackList(String key, Object o, Duration minutes) {
         redisBlackListTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(o.getClass()));
-        redisBlackListTemplate.opsForValue().set(key, o, minutes, TimeUnit.MINUTES);
+        redisBlackListTemplate.opsForValue().set(key, o, minutes);
     }
 
-    public Object retrieveBlackList(String key) {
+    public Object getBlackList(String key) {
         return redisBlackListTemplate.opsForValue().get(key);
     }
 

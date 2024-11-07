@@ -8,6 +8,7 @@ import com.example.zicdding.global.common.enums.ErrorCodeEnum;
 import com.example.zicdding.global.exception.CustomException;
 
 import com.example.zicdding.global.util.JwtUtil;
+import com.example.zicdding.global.util.RedisUtil;
 import com.example.zicdding.security.CustomUserDetail;
 import com.example.zicdding.security.provider.JwtProvider;
 
@@ -35,45 +36,53 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
-    private final CustomUserDetailService customUserDetailService;
 
+
+    private static final List<String> EXCLUDE_URL =
+            Collections.unmodifiableList(
+                    Arrays.asList(
+                            "/users/login",
+                            "/users/join",
+                            "/users/reissue"
+                    ));
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        String accessToken = resolveAccessToken(request);
+         String accessToken = resolveAccessToken(request);
+
         System.out.println("Filter start-----------------------------------------------------------------------------" + accessToken);
             if ( accessToken != null && jwtProvider.validateToken(accessToken)) {
-//                Authentication authentication = jwtProvider.getAuthentication(accessToken);
-//                SecurityContextHolder.getContext().setAuthentication(authentication);
-                String username = jwtProvider.getEmailFromToken(accessToken);
-
-                CustomUserDetail userDetail = (CustomUserDetail) customUserDetailService.loadUserByUsername(username);
-                Authentication authentication = new UsernamePasswordAuthenticationToken(userDetail, null, userDetail.getAuthorities());
+                Authentication authentication = jwtProvider.getAuthentication(accessToken);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+//                CustomUserDetail userDetail = (CustomUserDetail) customUserDetailService.loadUserByUsername(username);
+//                Authentication authentication = new UsernamePasswordAuthenticationToken(userDetail, null, userDetail.getAuthorities());
+//                SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
+
             chain.doFilter(request, response);
     }    /**
      * Request Header에서 Access Token을 쿠키로 조회
      */
-    private String resolveAccessToken(HttpServletRequest request) {
+    public String resolveAccessToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
                 if ("accessToken".equals(cookie.getName())) {
+                    System.out.println(cookie.getValue());
                     return cookie.getValue();
                 }
             }
         }
         return null;
     }
-
-
-    /**
-     * Request Header에서 Refresh Token을 쿠키로 조회
-     */
-    private String resolveRefreshToken(HttpServletRequest request) {
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        return EXCLUDE_URL.stream().anyMatch(exclude -> exclude.equalsIgnoreCase(request.getServletPath()));
+    }
+    public String resolveRefreshToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
                 if ("refreshToken".equals(cookie.getName())) {
+                    System.out.println(cookie.getValue());
                     return cookie.getValue();
                 }
             }
