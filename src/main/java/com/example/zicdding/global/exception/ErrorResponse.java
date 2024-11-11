@@ -10,16 +10,6 @@ public record ErrorResponse(
         String message // 에러 메시지
 ) {
 
-
-    public ErrorResponse(ErrorCodeEnum exceptionCode) {
-        this(exceptionCode.getCode(), exceptionCode.getStatus(), exceptionCode.getMessage());
-    }
-
-    public static ErrorResponse of(ErrorCodeEnum code) {
-        return new ErrorResponse(code);
-    }
-
-
     public static ErrorResponse error(CustomException e) {
         return new ErrorResponse(e.getErrorCode().getCode(), e.getHttpStatus().value(),  e.getMessage());
     }

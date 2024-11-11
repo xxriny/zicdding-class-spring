@@ -18,8 +18,7 @@ import java.util.Collection;
 public class User extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // final 제거
-
+    private Long id;
     private String email;
     private String password;
     private String nickname;

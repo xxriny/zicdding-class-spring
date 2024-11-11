@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입</title>
+</head>
+<body>
+<h1>회원가입</h1>
+<form id="signUpForm">
+    <label for="email">이메일:</label>
+    <input type="email" id="email" name="email" required><br><br>
+
+    <label for="nickname">닉네임:</label>
+    <input type="text" id="nickname" name="nickname" required><br><br>
+
+    <label for="password">비밀번호:</label>
+    <input type="password" id="password" name="password" required><br><br>
+
+    <label for="phoneNumber">전화번호:</label>
+    <input type="text" id="phoneNumber" name="phoneNumber" required><br><br>
+
+    <button type="submit">회원가입</button>
+</form>
+
+<div id="errorMessage" style="color: red; display: none;">
+    회원가입 실패: <span id="signupError"></span>
+</div>
+
+<div id="successMessage" style="display: none;">
+    <h2>회원가입 성공!</h2>
+    <p>환영합니다, <span id="userNickname"></span>님!</p>
+    <p>이메일: <span id="userEmail"></span></p>
+</div>
+
+<script>
+    document.getElementById("signUpForm").addEventListener("submit", function(event) {
+        event.preventDefault();  // 기본 폼 제출을 막습니다.
+
+        // 폼 데이터 가져오기
+        const formData = {
+            email: document.getElementById("email").value,
+            nickname: document.getElementById("nickname").value,
+            password: document.getElementById("password").value,
+            phoneNumber: document.getElementById("phoneNumber").value
+        };
+
+        // JSON으로 서버에 POST 요청 보내기
+        fetch('/users/signUp', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'  // JSON 형식으로 보냄
+            },
+            body: JSON.stringify(formData)  // formData를 JSON으로 변환하여 전송
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 200) {
+                    // 회원가입 성공
+                    document.getElementById("successMessage").style.display = 'block';
+                    document.getElementById("userNickname").textContent = data.data.nickname;
+                    document.getElementById("userEmail").textContent = data.data.email;
+                } else {
+                    // 회원가입 실패
+                    document.getElementById("errorMessage").style.display = 'block';
+                    document.getElementById("signupError").textContent = data.message;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById("errorMessage").style.display = 'block';
+                document.getElementById("signupError").textContent = '서버 오류. 다시 시도해주세요.';
+            });
+    });
+</script>
+
+</body>
+</html>

@@ -103,6 +103,7 @@ public class UserRepository {
                 .addValue("mod_date", user.getModDate())
                 .addValue("refresh_token", user.getRefreshToken());
         var id = jdbcInsert.executeAndReturnKey(params).longValue();
-        return User.builder().id(id).build();
+        user.setId(id);
+        return user;
     }
 }

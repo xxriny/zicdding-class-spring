@@ -4,9 +4,11 @@ import com.example.zicdding.domain.user.service.CustomUserDetailService;
 import com.example.zicdding.security.CustomUserDetail;
 import com.example.zicdding.security.filter.JwtAuthFilter;
 import com.example.zicdding.security.handler.CustomAccessDeniedHandler;
+import io.minio.MinioClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -38,7 +40,7 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-    // authenticationManager를 Bean 등록
+
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
@@ -48,36 +50,26 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true); // 클라이언트가 쿠키를 포함할 수 있도록 허용
-        configuration.addAllowedOrigin(""); // 클라이언트의 URL로 변경
+        configuration.addAllowedOrigin("http://localhost:8080"); // 클라이언트의 URL로 변경
         configuration.addAllowedMethod("*"); // 모든 HTTP 메소드 허용
         configuration.addAllowedHeader("*"); // 모든 헤더 허용
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, HandlerMappingIntrospector introspector, JwtAuthFilter jwtAuthFilter) throws Exception {
-        MvcRequestMatcher.Builder matcher = new MvcRequestMatcher.Builder(introspector);
-
-        MvcRequestMatcher[] permitAllWhitelist = {
-                matcher.pattern("/swagger-ui/**"),
-                matcher.pattern("/v3/api-docs/**"),
-                matcher.pattern("/users/**"),
-                matcher.pattern("/classes/**"),
-                matcher.pattern("/signUp.html"),
-                matcher.pattern("/test/**"),
-        };
-        http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(corsCustomizer -> corsCustomizer.configurationSource(corsConfigurationSource())) // CORS 설정 추가
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(permitAllWhitelist).permitAll()
-                        .anyRequest().authenticated()
-                )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .authorizeHttpRequests((authorizeRequests) ->
+                        authorizeRequests
+                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/users/login", "/users/logout",
+                                        "/users/signUp", "/classes/**", "/signUp.html", "/login.html",
+                                        "/logout.html", "/test/**")
+                                .permitAll())
+                .cors(corsCustomizer -> corsCustomizer.configurationSource(corsConfigurationSource())) // CORS 설정 추가
                 .exceptionHandling(handling -> handling
                         .accessDeniedHandler(accessDeniedHandler));
 

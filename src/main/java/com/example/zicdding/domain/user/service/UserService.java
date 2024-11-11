@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AbstractUserDetailsReactiveAuthenticationManager;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -22,6 +24,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -31,40 +34,40 @@ import static com.example.zicdding.global.common.enums.ErrorCodeEnum.*;
 @RequiredArgsConstructor
 @Service
 public class UserService {
+    private final AuthenticationManager authenticationManager;
     final private UserRepository userRepository;
     private final PasswordService passwordService;
     private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
     private final RedisTemplate<String, String> redisTemplate; // RedisTemplate 추가
-    private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final RedisUtil redisUtil;
-
     /**
      유저 생성
      @param userSaveDto
-     @return 유저 생성 성공, accesstoken, refreshtoken
+     @return user, accesstoken, refreshtoken
       * */
     public AuthResponseDto createUser(UserSaveDto userSaveDto) {
         //1. 이메일 체크
         checkEmail(userSaveDto.email());
         //2. 패스워드 인코딩
         String encryptPassword = passwordService.encryptPassword(userSaveDto.password());
-
+        // 3. 유저 생성
         var user  = User.builder()
                 .email(userSaveDto.email())
                 .nickname(userSaveDto.nickname())
                 .password(encryptPassword)
                 .build();
+        // 4. 인증 토큰 생성
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userSaveDto.email(),userSaveDto.password());
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
         String accessToken = jwtProvider.generateAccessToken(authenticationToken);
-        jwtProvider.generateRefreshToken(authenticationToken);
-        String refreshToken = jwtProvider.getRefreshTokenFromRedis(user.getEmail());
+        String refreshToken = jwtProvider.generateRefreshToken(authenticationToken);
 
         user.setRefreshToken(refreshToken);
         userRepository.save(user);
-
+         // 저장된 ID 확인
+        System.out.println("Saved User Email: " + user.getId());
         //SecurityContext에 인증 정보 저장
         return buildAuthResponse(user, accessToken, refreshToken);
     }
@@ -74,11 +77,11 @@ public class UserService {
      @return 이메일 중복 여부
       * */
     public void checkEmail(String email) {
-        Optional<User> emailCheck = userRepository.findByEmail(email);
-        if (emailCheck.isPresent()) {
+        userRepository.findByEmail(email).ifPresent(user -> {
             throw new CustomException(EMAIL_DUPLICATE);
-        }
+        });
     }
+
     /**
      *  로그인
      *
@@ -93,40 +96,45 @@ public class UserService {
         if (!passwordEncoder.matches(userLoginDto.password(), user.getPassword())) {
             throw new CustomException(PASSWORD_NOT_MATCH);
         }
+
         //인증 토큰 생성
-        UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(userLoginDto.email(), userLoginDto.password());
-        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(userLoginDto.email(), userLoginDto.password()));
 
         String accessToken = jwtProvider.generateAccessToken(authentication);
-        String refreshToken = redisTemplate.opsForValue().get(userLoginDto.email());
-        if(refreshToken == null && !jwtProvider.validateToken(refreshToken)) {
-            System.out.println("Refresh token expired");
-            jwtProvider.generateRefreshToken(authentication);
-            refreshToken = redisUtil.get(userLoginDto.email());
-           }
+        String refreshToken = jwtProvider.getRefreshTokenFromRedis(user.getRefreshToken());
+
+        if (refreshToken == null) {
+            // 리프레시 토큰이 없을 경우, 새로운 리프레시 토큰 생성
+            String newRefreshToken = jwtProvider.generateRefreshToken(authentication);
+            return buildAuthResponse(user, accessToken, newRefreshToken);
+        }
+
         System.out.println(refreshToken);
+        System.out.println(refreshToken +" ==========================로그인 시 확인" + authentication.getName()  + "dasdasdadsadsas=============");
+
         return buildAuthResponse(user, accessToken,refreshToken);
     }
 
+    /**
+     * 리프레시 토큰을 사용해 새로운 액세스 토큰을 발급
+     * @param refreshToken 리프레시 토큰
+     * @return 새로 발급된 액세스 토큰과 리프레시 토큰
+     */
     public AuthResponseDto reissueAccessToken(String refreshToken){
-        System.out.println(refreshToken + "왜");
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        System.out.println(authentication.getName());
-        System.out.println(redisTemplate.opsForValue().get(authentication.getName()));
-           if(refreshToken.equals(redisUtil.get(authentication.getName()))) {
+        Authentication authentication = jwtProvider.getAuthentication(refreshToken);
+        String email = authentication.getName();
 
-               System.out.println(authentication.getName()  +" 이메일");
-                User user = (User) authentication.getPrincipal();
-                String accessToken = jwtProvider.generateAccessToken(authentication);
-                return  buildAuthResponse(user,accessToken,refreshToken );
-            }else{
-                throw new RuntimeException("요청한 리프레시 없음");
-            }
+        String redisRefreshToken = redisUtil.get(email);
+        if (redisRefreshToken == null || !redisRefreshToken.equals(refreshToken)) {
+            throw new CustomException(ErrorCodeEnum.INVALID_REFRESH_TOKEN);
         }
-
-
+        String newAccessToken = jwtProvider.generateAccessToken(authentication);
+        // 사용자 정보 반환
+        User user = userRepository.findByRefreshToken(refreshToken).orElseThrow(() -> new CustomException(ErrorCodeEnum.USER_NOT_FOUND));
+        return buildAuthResponse(user, newAccessToken, refreshToken);
+    }
 
 
     /**
@@ -139,7 +147,9 @@ public class UserService {
      */
     private AuthResponseDto buildAuthResponse(User user, String accessToken, String refreshToken) {
         return AuthResponseDto.builder()
+                .id(user.getId())
                 .email(user.getEmail())
+                .nickname(user.getNickname())
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .build();

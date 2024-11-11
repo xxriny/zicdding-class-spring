@@ -24,7 +24,7 @@ public record CustomUserDetail(User user)  implements UserDetails {
         } else {
             throw new IllegalArgumentException("Invalid role type");
         }
-        return List.of(role.toAuthority()); // toAuthority 메서드로 권한 생성
+        return List.of(role.toAuthority());
     }
 
     @Override

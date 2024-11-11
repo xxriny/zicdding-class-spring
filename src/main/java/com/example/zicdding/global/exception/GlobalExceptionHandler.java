@@ -19,7 +19,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(exception.getHttpStatus())
                 .body(ErrorResponse.error(exception));
     }
-
     // CustomException 처리
     @ExceptionHandler(CustomException.class)
     public ResponseEntity<ErrorResponse> handleCustomException(CustomException e) {
