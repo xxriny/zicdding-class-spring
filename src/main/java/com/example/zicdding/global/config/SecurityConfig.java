@@ -40,7 +40,7 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
+    // authenticationManager를 Bean 등록
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
@@ -59,16 +59,14 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http,JwtAuthFilter jwtAuthFilter) throws Exception {
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests((authorizeRequests) ->
                         authorizeRequests
-                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/users/login", "/users/logout",
-                                        "/users/signUp", "/classes/**", "/signUp.html", "/login.html",
-                                        "/logout.html", "/test/**")
-                                .permitAll())
+                                .requestMatchers("/", "/users/**", "/*.html", "/login.html", "/*").permitAll())
                 .cors(corsCustomizer -> corsCustomizer.configurationSource(corsConfigurationSource())) // CORS 설정 추가
                 .exceptionHandling(handling -> handling
                         .accessDeniedHandler(accessDeniedHandler));

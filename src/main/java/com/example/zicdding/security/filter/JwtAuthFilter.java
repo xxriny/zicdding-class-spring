@@ -1,5 +1,6 @@
 package com.example.zicdding.security.filter;
 
+import ApiExceptionEnum.ACCESS_DENIED;
 import com.example.zicdding.global.common.enums.ErrorCodeEnum;
 import com.example.zicdding.global.exception.CustomException;
 import com.example.zicdding.security.handler.CustomAccessDeniedHandler;
@@ -32,15 +33,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (jwtProvider.validateToken(accessToken)) {
             Authentication authentication = jwtProvider.getAuthentication(accessToken);
             if (authentication != null) {
-                System.out.println("SecurityContext 설정 이메일: " + authentication.getName());
+                System.out.println("SecurityContext 설정 시 이메일: " + authentication.getName());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             } else {
-                throw new CustomException(ErrorCodeEnum.ACCESS_DENIED);
+                System.out.println("Authentication 객체가 null입니다.");
             }
-        }
-            chain.doFilter(request, response);
-    }
+        }      chain.doFilter(request, response);
 
+    }
     public String resolveAccessToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
@@ -50,7 +50,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 }
             }
         }
-        return new CustomException(ErrorCodeEnum.ACCESS_DENIED).getMessage();
+        return null;
     }
 
     public String resolveRefreshToken(HttpServletRequest request) {
@@ -63,6 +63,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 }
             }
         }
-        return new CustomException(ErrorCodeEnum.INVALID_REFRESH_TOKEN).getMessage();
+        throw new CustomException(ErrorCodeEnum.ACCESS_DENIED);
     }
 }

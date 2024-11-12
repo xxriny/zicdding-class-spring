@@ -58,11 +58,12 @@ public class UserService {
                 .password(encryptPassword)
                 .build();
         // 4. 인증 토큰 생성
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userSaveDto.email(),userSaveDto.password());
-        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(userSaveDto.email(), userSaveDto.password()));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String accessToken = jwtProvider.generateAccessToken(authenticationToken);
-        String refreshToken = jwtProvider.generateRefreshToken(authenticationToken);
+        String accessToken = jwtProvider.generateAccessToken(authentication);
+        String refreshToken = jwtProvider.generateRefreshToken(authentication);
 
         user.setRefreshToken(refreshToken);
         userRepository.save(user);
@@ -89,7 +90,6 @@ public class UserService {
      * @return 로그인 성공 시 유저 정보와 토큰
      */
     public AuthResponseDto login(UserLoginDto userLoginDto) {
-
         User user = userRepository.findByEmail(userLoginDto.email())
                 .orElseThrow(() -> new CustomException(ErrorCodeEnum.USER_NOT_FOUND));
 
@@ -103,15 +103,13 @@ public class UserService {
                 new UsernamePasswordAuthenticationToken(userLoginDto.email(), userLoginDto.password()));
 
         String accessToken = jwtProvider.generateAccessToken(authentication);
-        String refreshToken = jwtProvider.getRefreshTokenFromRedis(user.getRefreshToken());
+        String refreshToken = jwtProvider.generateRefreshToken(authentication);
 
+        System.out.println(refreshToken +" ==========================로그인 시 확인" + authentication.getName());
         if (refreshToken == null) {
-            // 리프레시 토큰이 없을 경우, 새로운 리프레시 토큰 생성
-            String newRefreshToken = jwtProvider.generateRefreshToken(authentication);
-            return buildAuthResponse(user, accessToken, newRefreshToken);
+            refreshToken = jwtProvider.generateRefreshToken(authentication);
         }
 
-        System.out.println(refreshToken);
         System.out.println(refreshToken +" ==========================로그인 시 확인" + authentication.getName()  + "dasdasdadsadsas=============");
 
         return buildAuthResponse(user, accessToken,refreshToken);
@@ -125,7 +123,6 @@ public class UserService {
     public AuthResponseDto reissueAccessToken(String refreshToken){
         Authentication authentication = jwtProvider.getAuthentication(refreshToken);
         String email = authentication.getName();
-
         String redisRefreshToken = redisUtil.get(email);
         if (redisRefreshToken == null || !redisRefreshToken.equals(refreshToken)) {
             throw new CustomException(ErrorCodeEnum.INVALID_REFRESH_TOKEN);

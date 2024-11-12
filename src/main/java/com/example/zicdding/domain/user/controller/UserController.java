@@ -11,6 +11,7 @@ import com.example.zicdding.global.util.RedisUtil;
 
 import com.example.zicdding.security.filter.JwtAuthFilter;
 import com.example.zicdding.security.provider.JwtProvider;
+import io.jsonwebtoken.security.InvalidKeyException;
 import io.minio.errors.*;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.Cookie;
@@ -29,7 +30,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.util.prefs.BackingStoreException;
@@ -56,26 +56,26 @@ public class UserController {
 
         return ApiResponse.of(SuccessEnum.USER_CREATED, authResponse);
     }
-    // 인증된 사용자 정보 조회
+
+    //인증된 사용자만 조회
     @GetMapping("/me")
     public ApiResponse<UserInfoDto> getAuthenticatedUser(@AuthenticationPrincipal UserDetails userDetails) {
         if (userDetails == null) {
             return ApiResponse.of(ErrorCodeEnum.ACCESS_DENIED);
         }
-
-        // 현재 로그인된 사용자 정보를 가져옴
+        
         UserInfoDto userResponse = userReadService.getUserInfo(userDetails.getUsername());
         return ApiResponse.of(SuccessEnum.MYPAGE_SUCCESS,userResponse);
     }
-    @PostMapping("/me")
-    public ApiResponse<String> updateAuthenticatedUser(@RequestParam("file") MultipartFile file ,@AuthenticationPrincipal UserDetails userDetails) {
-//        try{
-//         //   String fileName = fileService.uploadFile(file);
-//        //    String imageUrl = fileService.getImageUrl(fileName);
-//          //  userService.updateUser(userDetails.getUsername(), imageUrl);
-//            return ApiResponse.of(SuccessEnum.MYPAGE_SUCCESS);
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
+//   @PostMapping("/me")
+//   public ApiResponse<String> updateAuthenticatedUser(@RequestParam("file") MultipartFile file , @AuthenticationPrincipal UserDetails userDetails) {
+//       try{
+//           String fileName = fileService.uploadFile(file);
+//           String imageUrl = fileService.getImageUrl(fileName);
+//          userService.updateUser(userDetails.getUsername(), imageUrl);
+//           return ApiResponse.of(SuccessEnum.MYPAGE_SUCCESS);
+//       } catch (IOException e) {
+//           throw new RuntimeException(e);
 //        } catch (ServerException e) {
 //            throw new RuntimeException(e);
 //        } catch (InsufficientDataException e) {
@@ -93,8 +93,8 @@ public class UserController {
 //        } catch (InternalException e) {
 //            throw new RuntimeException(e);
 //        }
-        return null;
-    }
+//       return null;
+//   }
     @Operation(summary = "로그인")
     @PostMapping("/signIn")
     public ApiResponse<AuthResponseDto> signIn(@RequestBody UserLoginDto userLoginDto, HttpServletResponse response) throws BackingStoreException {
@@ -108,8 +108,10 @@ public class UserController {
     }
 
     @GetMapping("/reissue")
-    public ApiResponse<AuthResponseDto> reissue(@CookieValue(name ="refreshToken") String request, HttpServletResponse response) {
-        AuthResponseDto authResponse = userService.reissueAccessToken(request);
+    public ApiResponse<AuthResponseDto> reissue(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = request.getHeader("refreshToken");
+
+        AuthResponseDto authResponse = userService.reissueAccessToken(refreshToken);
         // 기존 쿠키 삭제
         deleteCookie(response, "accessToken");
         deleteCookie(response, "refreshToken");
